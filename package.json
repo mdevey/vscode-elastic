@@ -73,6 +73,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Show result in a new json file, or show in default view"
+				},
+				"elastic.rejectUnauthorized": {
+					"type": "boolean",
+					"default": true,
+					"description": "Fail connections to server with bad or self-signed certificates"
 				}
 			}
 		},

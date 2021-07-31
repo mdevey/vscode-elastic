@@ -204,6 +204,7 @@ export async function executeQuery(context: vscode.ExtensionContext, resultsProv
     request(<request.UrlOptions & request.CoreOptions>{
         url: requestUrl,
         method: em.Method.Text,
+        rejectUnauthorized: config.get("elastic.rejectUnauthorized"),
         body: stripJsonComments(em.Body.Text),
         headers: {
             'Accept': 'application/json',

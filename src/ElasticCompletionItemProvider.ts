@@ -13,10 +13,12 @@ import * as os from 'os';
 
 export class ElasticCompletionItemProvider implements vscode.CompletionItemProvider, vscode.HoverProvider  {
 
+    private readonly config: any;
     private readonly context: vscode.ExtensionContext;
     private readonly restSpec: any;
 
     constructor(context: vscode.ExtensionContext) {
+        this.config = vscode.workspace.getConfiguration();
         this.context = context;
         this.restSpec = this.buildRestSpecRouter();
     }
@@ -33,7 +35,7 @@ export class ElasticCompletionItemProvider implements vscode.CompletionItemProvi
             const endpointNames = Object.keys(endpointDescriptions);
 
             const router = result[version] = routington();
-  
+
             endpointNames.forEach(endpointName => {
                 const endpointDescription = endpointDescriptions[endpointName];
                 if (common) {
@@ -43,7 +45,7 @@ export class ElasticCompletionItemProvider implements vscode.CompletionItemProvi
                     else
                         endpointDescription.url.params = common.params;
                 }
-                
+
                 const paths = endpointDescription.url.paths.map(path => path.replace(/\{/g, ':').replace(/\}/g, ''));
                 const methods = endpointDescription.methods;
                 methods.forEach(method => paths
@@ -55,13 +57,13 @@ export class ElasticCompletionItemProvider implements vscode.CompletionItemProvi
     }
 
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
-        return this.asyncProvideCompletionItems(document, position, token);    
+        return this.asyncProvideCompletionItems(document, position, token);
     }
 
     provideHover(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover> {
-        return this.asyncProvideHover(document, position);    
+        return this.asyncProvideHover(document, position);
 
-        
+
     }
 
     private async asyncProvideHover(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover> {
@@ -105,7 +107,7 @@ export class ElasticCompletionItemProvider implements vscode.CompletionItemProvi
     }
 
     private async asyncProvideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
-               
+
 
         let esVersion = await this.getElasticVersion();
         esVersion = '6.0.0'
@@ -121,14 +123,14 @@ export class ElasticCompletionItemProvider implements vscode.CompletionItemProvi
         let restSpec = this.restSpec[apiVersion];
         if (!restSpec)
             return [];
-        
+
         if (this.isPathCompletion(esMatch, position))
-            return this.providePathCompletionItem(esMatch, restSpec);    
+            return this.providePathCompletionItem(esMatch, restSpec);
         else if (this.isPathParamCompletion(esMatch, position))
-            return this.providePathParamCompletionItem(esMatch, restSpec);    
-            
+            return this.providePathParamCompletionItem(esMatch, restSpec);
+
         console.log(esMatch.Body.Text);
-        
+
         return [];
     }
 
@@ -138,7 +140,7 @@ export class ElasticCompletionItemProvider implements vscode.CompletionItemProvi
             return [];
         return Object.keys(match.node.spec.url.params)
             .map(param => new vscode.CompletionItem(param));
-    }        
+    }
 
     private async providePathCompletionItem(esMatch: any, restSpec: any): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
         let parts = esMatch.Path.Text.split('/').filter(part => part.length);
@@ -181,7 +183,7 @@ export class ElasticCompletionItemProvider implements vscode.CompletionItemProvi
         result = result.concat(Object.keys(parent.child).map(child => ({
             label: child
         })));
-            
+
         return result.filter(part => part.label.length)
             .map(part => new vscode.CompletionItem(part.label));
     }
@@ -204,6 +206,7 @@ export class ElasticCompletionItemProvider implements vscode.CompletionItemProvi
         return new Promise<string[]>((resolve, reject) => {
             request(<request.UrlOptions & request.CoreOptions>{
                 url: requestUrl + '?format=json', method: 'GET',
+                rejectUnauthorized: this.config.get("elastic.rejectUnauthorized"),
                 headers: { 'Content-Type': 'application/json' }
             }, (error, response, body) => {
                 try {
@@ -220,6 +223,7 @@ export class ElasticCompletionItemProvider implements vscode.CompletionItemProvi
         return new Promise<string[]>((resolve, reject) => {
             request(<request.UrlOptions & request.CoreOptions>{
                 url: requestUrl + '?format=json', method: 'GET',
+                rejectUnauthorized: this.config.get("elastic.rejectUnauthorized"),
                 headers: { 'Content-Type': 'application/json' }
             }, (error, response, body) => {
                 try {
@@ -237,6 +241,7 @@ export class ElasticCompletionItemProvider implements vscode.CompletionItemProvi
         return new Promise<string[]>((resolve, reject) => {
             request(<request.UrlOptions & request.CoreOptions>{
                 url: requestUrl, method: 'GET',
+                rejectUnauthorized: this.config.get("elastic.rejectUnauthorized"),
                 headers: { 'Content-Type': 'application/json' }
             }, (error, response, body) => {
                 try {
@@ -254,6 +259,7 @@ export class ElasticCompletionItemProvider implements vscode.CompletionItemProvi
         return new Promise<string>((resolve, reject) => {
             request(<request.UrlOptions & request.CoreOptions>{
                 url: requestUrl, method: 'GET',
+                rejectUnauthorized: this.config.get("elastic.rejectUnauthorized"),
                 headers: { 'Content-Type': 'application/json' }
             }, (error, response, body) => {
                 try {
